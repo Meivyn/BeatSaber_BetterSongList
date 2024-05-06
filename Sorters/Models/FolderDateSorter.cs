@@ -41,18 +41,21 @@ namespace BetterSongList.SortModels {
 
 					foreach(var song in 
 						SongCore.Loader.BeatmapLevelsModelSO
-						.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.Where(x => x is SongCore.OverrideClasses.SongCoreCustomBeatmapLevelPack)
-						.SelectMany(x => x.beatmapLevelCollection.beatmapLevels)
-						.Cast<CustomPreviewBeatmapLevel>()
+						._allLoadedBeatmapLevelsRepository.beatmapLevelPacks.Where(x => x is SongCore.OverrideClasses.SongCoreCustomBeatmapLevelPack)
+						.SelectMany(x => x.beatmapLevels)
+						//.Cast<CustomPreviewBeatmapLevel>()
 					) {
 						if(songTimes.ContainsKey(song.levelID) && !fullReload)
 							continue;
 
+						var levelFolderPath = SongCore.Loader.CustomLevelLoader._loadedBeatmapSaveData.TryGetValue(song.levelID, out var savedata) 
+							? savedata.customLevelFolderInfo.folderPath 
+							: null;
 						/*
 						 * There isnt really any "good" setup - LastWriteTime is cloned when copying a file and retained when manually
 						 * extracing from a zip, but the createtime is obviously "reset" when you copy files
 						 */
-						songTimes[song.levelID] = (int)File.GetCreationTimeUtc(song.customLevelPath + fpath).ToUnixTime();
+						songTimes[song.levelID] = levelFolderPath == null ? 0 : (int)File.GetCreationTimeUtc(levelFolderPath + fpath).ToUnixTime();
 					}
 
 					Plugin.Log.Debug(string.Format("Getting SongFolder dates took {0}ms", xy.ElapsedMilliseconds));
@@ -65,7 +68,7 @@ namespace BetterSongList.SortModels {
 			return wipTask.Task;
 		}
 
-		public float? GetValueFor(IPreviewBeatmapLevel level) {
+		public float? GetValueFor(BeatmapLevel level) {
 			if(songTimes.TryGetValue(level.levelID, out var oVal))
 				return oVal;
 
@@ -86,7 +89,7 @@ namespace BetterSongList.SortModels {
 			return Math.Round(months) + " M";
 		}
 
-		public IEnumerable<KeyValuePair<string, int>> BuildLegend(IPreviewBeatmapLevel[] levels) {
+		public IEnumerable<KeyValuePair<string, int>> BuildLegend(BeatmapLevel[] levels) {
 			var curUtc = (int)DateTime.UtcNow.ToUnixTime();
 
 			return SongListLegendBuilder.BuildFor(levels, (level) => {

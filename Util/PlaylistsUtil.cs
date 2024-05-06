@@ -33,7 +33,7 @@ namespace BetterSongList.Util {
 					if(!SongCore.Loader.AreSongsLoaded)
 						return null;
 					foreach(var x in BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.GetAllPlaylists(true)) {
-						if(x.Title == packName)  //TODO test
+						if(x.Title == packName)
 							return x.PlaylistLevelPack;
 					}
 					return null;
