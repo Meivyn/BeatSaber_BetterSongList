@@ -156,7 +156,7 @@ namespace BetterSongList.HarmonyPatches {
 		[HarmonyPriority(int.MaxValue)]
 		static void Prefix(
 			LevelCollectionTableView __instance, TableView ____tableView,
-			ref IReadOnlyList<BeatmapLevel> beatmapLevels, HashSet<string> favoriteLevelIds, ref bool beatmapLevelsAreSorted, bool sortPreviewBeatmapLevels
+			ref IReadOnlyList<BeatmapLevel> beatmapLevels, HashSet<string> favoriteLevelIds, ref bool beatmapLevelsAreSorted, bool sortBeatmapLevels
 		) {
 #if TRACE
 			Plugin.Log.Debug("LevelCollectionTableView.SetData():Prefix");
@@ -164,7 +164,7 @@ namespace BetterSongList.HarmonyPatches {
 			// If SetData is called with the literal same maplist as before we might as well ignore it
 			if(beatmapLevels == lastInMapList) {
 #if TRACE
-				Plugin.Log.Debug("LevelCollectionTableView.SetData():Prefix => previewBeatmapLevels == lastInMapList");
+				Plugin.Log.Debug("LevelCollectionTableView.SetData():Prefix => beatmapLevels == lastInMapList");
 #endif
 				beatmapLevels = lastOutMapList;
 				return;
@@ -176,7 +176,7 @@ namespace BetterSongList.HarmonyPatches {
 
 			lastInMapList = beatmapLevels;
 			var _isSorted = beatmapLevelsAreSorted;
-			recallLast = (overrideData) => __instance.SetData(overrideData ?? lastInMapList, favoriteLevelIds, _isSorted, sortPreviewBeatmapLevels);
+			recallLast = (overrideData) => __instance.SetData(overrideData ?? lastInMapList, favoriteLevelIds, _isSorted, sortBeatmapLevels);
 
 			//Console.WriteLine("=> {0}", new System.Diagnostics.StackTrace().ToString());
 
@@ -205,8 +205,8 @@ namespace BetterSongList.HarmonyPatches {
 
 
 		static KeyValuePair<string, int>[] customLegend = null;
-		static void Postfix(TableView ____tableView, AlphabetScrollbar ____alphabetScrollbar, IReadOnlyList<BeatmapLevel> previewBeatmapLevels) {
-			lastOutMapList = previewBeatmapLevels;
+		static void Postfix(TableView ____tableView, AlphabetScrollbar ____alphabetScrollbar, IReadOnlyList<BeatmapLevel> beatmapLevels) {
+			lastOutMapList = beatmapLevels;
 
 			// Basegame already handles cleaning up the legend etc
 			if(customLegend == null || customLegend.Length == 0)

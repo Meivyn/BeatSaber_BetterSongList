@@ -65,7 +65,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 		}
 
 		[HarmonyPriority(int.MinValue)]
-		static void Postfix(StandardLevelDetailView __instance, Button ____practiceButton, BeatmapLevel ____level) {
+		static void Postfix(StandardLevelDetailView __instance, Button ____practiceButton, BeatmapLevel ____beatmapLevel) {
 			if(deleteButton == null && ____practiceButton != null) {
 				var newButton = GameObject.Instantiate(____practiceButton.gameObject, ____practiceButton.transform.parent);
 				deleteButton = newButton.GetComponentInChildren<Button>();
@@ -96,8 +96,8 @@ namespace BetterSongList.HarmonyPatches.UI {
 				);
 			}
 
-			if (BeatmapsUtil.GetHashOfLevel(____level) != null)	
-				lastLevel = ____level;
+			if (BeatmapsUtil.GetHashOfLevel(____beatmapLevel) != null)	
+				lastLevel = ____beatmapLevel;
 
 			UpdateState();
 		}

@@ -36,7 +36,7 @@ namespace BetterSongList.HarmonyPatches {
 		[HarmonyPatch(typeof(LevelCollectionTableView), nameof(LevelCollectionTableView.SetData))]
 		static class DoTheFunnySelect {
 			[HarmonyPriority(int.MinValue)]
-			static void Postfix(TableView ____tableView, IReadOnlyList<BeatmapLevel> ____beatmapLevels, bool ____showLevelPackHeader) {
+			static void Postfix(TableView ____tableView) {
 #if TRACE
 				Plugin.Log.Warn(string.Format("DoTheFunnySelect -> LevelCollectionTableView.SetData():Postfix scrollToIndex: {0}", scrollToIndex));
 #endif
