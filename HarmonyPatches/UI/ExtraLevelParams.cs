@@ -20,7 +20,6 @@ namespace BetterSongList.HarmonyPatches.UI {
 		static TextMeshProUGUI[] fields = null;
 
 		static HoverHintController hhc = null;
-		static readonly FieldInfo FIELD_LevelParamsPanel_obstaclesCount = AccessTools.Field(typeof(LevelParamsPanel), "_obstaclesCountText");
 		static IEnumerator ProcessFields() {
 			//Need to wait until the end of frame for reasons beyond my understanding
 			yield return new WaitForEndOfFrame();
@@ -50,18 +49,21 @@ namespace BetterSongList.HarmonyPatches.UI {
 			fields[0].characterSpacing = -3f;
 		}
 
-		static StandardLevelDetailView lastInstance = null;
+		internal static StandardLevelDetailView lastInstance { get; private set; } = null;
 
 		public static void UpdateState() {
 			if(lastInstance != null && lastInstance.isActiveAndEnabled)
 				lastInstance.RefreshContent();
 		}
 
-
-		static void Postfix(IBeatmapLevel ____level, IDifficultyBeatmap ____selectedDifficultyBeatmap, LevelParamsPanel ____levelParamsPanel, StandardLevelDetailView __instance) {
+		static void Postfix(BeatmapLevel ____beatmapLevel, LevelParamsPanel ____levelParamsPanel, StandardLevelDetailView __instance) {
+			var beatmapKey = __instance.beatmapKey;
+			
 			if(extraUI == null) {
 				// I wanted to make a custom UI for this with bsml first... But this is MUCH easier and probably looks better
 				extraUI = GameObject.Instantiate(____levelParamsPanel, ____levelParamsPanel.transform.parent).gameObject;
+				extraUI.GetComponentInChildren<CanvasGroup>().alpha = 1;  // Don't know why the cloned one has 0 alpha
+
 				GameObject.Destroy(extraUI.GetComponent<LevelParamsPanel>());
 
 				____levelParamsPanel.transform.localPosition += new Vector3(0, 3.5f);
@@ -73,48 +75,24 @@ namespace BetterSongList.HarmonyPatches.UI {
 
 			lastInstance = __instance;
 
-			var obstaclesText = (TextMeshProUGUI)FIELD_LevelParamsPanel_obstaclesCount.GetValue(____levelParamsPanel);
-			obstaclesText.fontStyle = FontStyles.Italic;
-
-			// Crouchwalls HAHABALLS
-			if(Config.Instance.ShowWarningIfMapHasCrouchWallsBecauseMappersThinkSprinklingThemInRandomlyIsFun) {
-				obstaclesText.richText = true;
-
-				// I am in a lot of pain 😀👍
-				if(____selectedDifficultyBeatmap is CustomDifficultyBeatmap customdiff) {
-					j(customdiff.beatmapSaveData.obstacles);
-				} else {
-					// Wont care about OST for now
-					j(null);
-				}
-
-				void j(List<BeatmapSaveDataVersion3.BeatmapSaveData.ObstacleData> obst) {
-					if(!BeatmapPatternDetection.CheckForCrouchWalls(obst))
-						return;
-
-					obstaclesText.fontStyle = FontStyles.Normal;
-					obstaclesText.text = $"<i>{obstaclesText.text}</i> <b><size=3.3><color=#FF0>⚠</color></size></b>";
-				}
-			}
-
 			if(fields != null) {
 				if(!SongDetailsUtil.isAvailable) {
 					fields[0].text = fields[1].text = "N/A";
 				} else if(SongDetailsUtil.songDetails != null) {
 					void wrapper() {
 						// For now we can assume non-standard diff is unranked. Probably not changing any time soon i guess
-						var ch = (SongDetailsCache.Structs.MapCharacteristic)BeatmapsUtil.GetCharacteristicFromDifficulty(____selectedDifficultyBeatmap);
+						var ch = (SongDetailsCache.Structs.MapCharacteristic)BeatmapsUtil.GetCharacteristicFromDifficulty(beatmapKey);
 
 						if(ch != SongDetailsCache.Structs.MapCharacteristic.Standard) {
 							fields[0].text = fields[1].text = "-";
 						} else {
-							var mh = BeatmapsUtil.GetHashOfPreview(____level);
+							var mh = BeatmapsUtil.GetHashOfLevel(____beatmapLevel);
 
 							if(mh == null ||
 								!SongDetailsUtil.songDetails.instance.songs.FindByHash(mh, out var song) ||
 								!song.GetDifficulty(
 									out var diff,
-									(SongDetailsCache.Structs.MapDifficulty)____selectedDifficultyBeatmap.difficulty,
+									(SongDetailsCache.Structs.MapDifficulty)beatmapKey.difficulty,
 									ch
 								)
 							) {
@@ -152,9 +130,10 @@ namespace BetterSongList.HarmonyPatches.UI {
 				}
 
 				// Basegame maps have no NJS or JD
-				var njs = ____selectedDifficultyBeatmap.noteJumpMovementSpeed;
+				var basicData = ____beatmapLevel.GetDifficultyBeatmapData(beatmapKey.beatmapCharacteristic, beatmapKey.difficulty);
+				var njs = basicData?.noteJumpMovementSpeed ?? 0;
 				if(njs == 0)
-					njs = BeatmapDifficultyMethods.NoteJumpMovementSpeed(____selectedDifficultyBeatmap.difficulty);
+					njs = BeatmapDifficultyMethods.NoteJumpMovementSpeed(beatmapKey.difficulty);
 
 				fields[2].text = njs.ToString("0.0#");
 

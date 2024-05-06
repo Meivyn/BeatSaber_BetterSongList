@@ -1,9 +1,12 @@
-﻿using HarmonyLib;
+﻿using System;
+using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace BetterSongList.HarmonyPatches {
+
 	[HarmonyPatch(typeof(LevelFilter), nameof(LevelFilter.FilterLevelByText))]
 	static class ImproveBasegameSearch {
 		[HarmonyPriority(int.MinValue + 10)]
@@ -22,7 +25,7 @@ namespace BetterSongList.HarmonyPatches {
 			// This appends a space and the levelAuthorName to the levelString variable.
 			var matcher = new CodeMatcher(instructions)
 				.MatchForward(true,
-					new CodeMatch(OpCodes.Ldloc_2, null, "L_previewBeatmapLevel"),
+					new CodeMatch(OpCodes.Ldloc_2, null, "L_BeatmapLevel"),
 					new CodeMatch(),
 					new CodeMatch(OpCodes.Stelem_Ref),
 					new CodeMatch(x => x.opcode == OpCodes.Call && (x.operand as MethodInfo)?.Name == nameof(string.Concat), "Call_Concat")
@@ -47,8 +50,8 @@ namespace BetterSongList.HarmonyPatches {
 
 				new CodeInstruction(OpCodes.Dup),
 				new CodeInstruction(OpCodes.Ldc_I4_2),
-				matcher.NamedMatch("L_previewBeatmapLevel"),
-				new CodeInstruction(OpCodes.Callvirt, AccessTools.PropertyGetter(typeof(IPreviewBeatmapLevel), nameof(IPreviewBeatmapLevel.levelAuthorName))),
+				matcher.NamedMatch("L_BeatmapLevel"),
+				Transpilers.EmitDelegate<Func<BeatmapLevel, string>>(level => level.allMappers.Concat(level.allLighters).Distinct().Join(null, " ")),
 				new CodeInstruction(OpCodes.Stelem_Ref),
 
 				matcher.NamedMatch("Call_Concat")

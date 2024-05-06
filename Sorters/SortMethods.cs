@@ -18,8 +18,9 @@ namespace BetterSongList {
 		);
 
 		public static readonly ISorter alphabeticalMapper = new ComparableFunctionSorterWithLegend(
-			(songa, songb) => string.Compare(songa.levelAuthorName, songb.levelAuthorName),
-			song => song.levelAuthorName.Length > 0 ? song.levelAuthorName.Substring(0, 1) : null
+			(songa, songb) => string.Compare(songa.allMappers.Length > 0 ? songa.allMappers[0] : "",
+				songb.allMappers.Length > 0 ? songb.allMappers[0] : ""),
+			song => song.allMappers.Length > 0 && song.allMappers[0].Length > 0 ? song.allMappers[0].Substring(0, 1) : null
 		);
 		public static readonly ISorter downloadTime = new FolderDateSorter();
 
