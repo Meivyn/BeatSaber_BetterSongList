@@ -19,7 +19,7 @@ namespace BetterSongList.Util {
 
 			if(packs == null) {
 				packs =
-					SongCore.Loader.BeatmapLevelsModelSO._allLoadedBeatmapLevelsRepository.beatmapLevelPacks
+					SongCore.Loader.BeatmapLevelsModelSO?._allLoadedBeatmapLevelsRepository.beatmapLevelPacks
 					// There shouldnt be any duplicate name basegame playlists... But better be safe
 					.GroupBy(x => x.shortPackName)
 					.Select(x => x.First())
@@ -33,8 +33,9 @@ namespace BetterSongList.Util {
 					if(!SongCore.Loader.AreSongsLoaded)
 						return null;
 					foreach(var x in BeatSaberPlaylistsLib.PlaylistManager.DefaultManager.GetAllPlaylists(true)) {
-						if(x.Title == packName)
-							return x.PlaylistLevelPack;
+						var playlistLevelPack = x.PlaylistLevelPack;
+						if(x.PlaylistLevelPack.packName == packName)
+							return playlistLevelPack;
 					}
 					return null;
 				}

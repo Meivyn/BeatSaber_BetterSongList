@@ -13,7 +13,7 @@ namespace BetterSongList.SortModels {
 
 		/*
 		 * TODO: For now, I need to use LevelId : int because I have to cast Playlists in LevelCollectionTableSet
-		 * once that is gone (Fixed BS Playlist Lib) I can go back to IPreviewBeatmapLevel : int
+		 * once that is gone (Fixed BS Playlist Lib) I can go back to BeatmapLevel : int
 		 */
 		static ConcurrentDictionary<string, int> songTimes = null;
 
@@ -39,11 +39,10 @@ namespace BetterSongList.SortModels {
 
 					var fpath = Path.DirectorySeparatorChar + "info.dat";
 
-					foreach(var song in 
+					foreach(var song in
 						SongCore.Loader.BeatmapLevelsModelSO
-						._allLoadedBeatmapLevelsRepository.beatmapLevelPacks.Where(x => x is SongCore.OverrideClasses.SongCoreCustomBeatmapLevelPack)
-						.SelectMany(x => x.beatmapLevels)
-						//.Cast<CustomPreviewBeatmapLevel>()
+						._customLevelsRepository?.beatmapLevelPacks.Where(x => x is SongCore.OverrideClasses.SongCoreCustomBeatmapLevelPack)
+						.SelectMany(x => x.beatmapLevels) ?? new List<BeatmapLevel>()
 					) {
 						if(songTimes.ContainsKey(song.levelID) && !fullReload)
 							continue;
@@ -51,11 +50,14 @@ namespace BetterSongList.SortModels {
 						var levelFolderPath = SongCore.Loader.CustomLevelLoader._loadedBeatmapSaveData.TryGetValue(song.levelID, out var savedata) 
 							? savedata.customLevelFolderInfo.folderPath 
 							: null;
+						if(string.IsNullOrEmpty(levelFolderPath))
+							continue;
+						
 						/*
 						 * There isnt really any "good" setup - LastWriteTime is cloned when copying a file and retained when manually
 						 * extracing from a zip, but the createtime is obviously "reset" when you copy files
 						 */
-						songTimes[song.levelID] = levelFolderPath == null ? 0 : (int)File.GetCreationTimeUtc(levelFolderPath + fpath).ToUnixTime();
+						songTimes[song.levelID] = (int)File.GetCreationTimeUtc(levelFolderPath + fpath).ToUnixTime();
 					}
 
 					Plugin.Log.Debug(string.Format("Getting SongFolder dates took {0}ms", xy.ElapsedMilliseconds));

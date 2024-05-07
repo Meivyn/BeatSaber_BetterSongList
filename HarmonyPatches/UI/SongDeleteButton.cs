@@ -44,7 +44,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 					? loadedSaveData.customLevelFolderInfo.folderPath
 					: null;
 				
-				if(path == null)
+				if(string.IsNullOrEmpty(path))
 					return;
 				
 				try {
@@ -96,8 +96,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 				);
 			}
 
-			if (BeatmapsUtil.GetHashOfLevel(____beatmapLevel) != null)	
-				lastLevel = ____beatmapLevel;
+			lastLevel = !____beatmapLevel.hasPrecalculatedData ? ____beatmapLevel : null;
 
 			UpdateState();
 		}
