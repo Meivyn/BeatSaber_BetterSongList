@@ -44,10 +44,9 @@ namespace BetterSongList.HarmonyPatches {
 
 	[HarmonyPatch(typeof(LevelSelectionFlowCoordinator), nameof(LevelSelectionFlowCoordinator.DidActivate))]
 	static class LevelSelectionFlowCoordinator_DidActivate {
-
-		private static BeatmapLevelsModel beatmapLevelsModel = BeatSaberMarkupLanguage.BeatSaberUI.MainFlowCoordinator._beatmapLevelsModel;
-
-		static void Prefix(ref LevelSelectionFlowCoordinator.State ____startState, bool addedToHierarchy) {
+		static readonly ConstructorInfo thingy = AccessTools.FirstConstructor(typeof(LevelSelectionFlowCoordinator.State), x => x.GetParameters().Length == 4);
+		
+		static void Prefix(LevelSelectionFlowCoordinator __instance, ref LevelSelectionFlowCoordinator.State ____startState, bool addedToHierarchy) {
 			if(!addedToHierarchy)
 				return;
 
@@ -62,8 +61,8 @@ namespace BetterSongList.HarmonyPatches {
 			if(!Enum.TryParse(Config.Instance.LastCategory, out LevelCategory restoreCategory))
 				restoreCategory = LevelCategory.None;
 
-			if(Config.Instance.LastSong == null || !beatmapLevelsModel._loadedBeatmapLevels.TryGetValue(Config.Instance.LastSong, out var lastSelectedLevel))
-				lastSelectedLevel = null;
+			if(Config.Instance.LastSong == null || !__instance.levelSelectionNavigationController._levelFilteringNavigationController._beatmapLevelsModel._loadedBeatmapLevels.TryGetValue(Config.Instance.LastSong, out var m))
+				m = null;
 
 			PackPreselect.LoadPackFromCollectionName();
 
@@ -72,11 +71,12 @@ namespace BetterSongList.HarmonyPatches {
 			if(restoreCategory == LevelCategory.All || restoreCategory == LevelCategory.Favorites)
 				pack = SongCore.Loader.CustomLevelsPack;
 
-			____startState = new LevelSelectionFlowCoordinator.State(
-				restoreCategory, 
-				pack, 
-				new BeatmapKey(), 
-				lastSelectedLevel);
+			____startState = (LevelSelectionFlowCoordinator.State)thingy.Invoke(new object[] {
+				restoreCategory,
+				pack,
+				new BeatmapKey(),
+				m
+			});
 		}
 	}
 }

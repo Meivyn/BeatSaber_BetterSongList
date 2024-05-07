@@ -22,7 +22,7 @@
 		public static int GetCharacteristicFromDifficulty(BeatmapKey diff) {
 			var d = diff.beatmapCharacteristic.sortingOrder;
 
-			if(d == null || d > 4)
+			if(d > 4)
 				return 0;
 
 			// 360 and 90 are "flipped" as far as the enum goes

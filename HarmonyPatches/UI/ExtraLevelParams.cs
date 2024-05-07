@@ -5,7 +5,6 @@ using HMUI;
 using IPA.Utilities;
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -18,6 +17,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 	static class ExtraLevelParams {
 		static GameObject extraUI = null;
 		static TextMeshProUGUI[] fields = null;
+		static Sprite starIcon = Resources.FindObjectsOfTypeAll<Sprite>().Last(s => s.name == "FavoritesIcon");
 
 		static HoverHintController hhc = null;
 		static IEnumerator ProcessFields() {
@@ -25,7 +25,12 @@ namespace BetterSongList.HarmonyPatches.UI {
 			yield return new WaitForEndOfFrame();
 
 			static void ModifyValue(TextMeshProUGUI text, string hoverHint, string icon) {
-				text.transform.parent.Find("Icon").GetComponent<ImageView>().SetImage($"#{icon}Icon");
+				if(icon == "Favorites") {
+					text.transform.parent.Find("Icon").GetComponent<ImageView>().sprite = starIcon;
+				} else {
+					text.transform.parent.Find("Icon").GetComponent<ImageView>().SetImageAsync($"#{icon}Icon");
+				}
+	
 				GameObject.DestroyImmediate(text.GetComponentInParent<LocalizedHoverHint>());
 				var hhint = text.GetComponentInParent<HoverHint>();
 
@@ -57,12 +62,9 @@ namespace BetterSongList.HarmonyPatches.UI {
 		}
 
 		static void Postfix(BeatmapLevel ____beatmapLevel, LevelParamsPanel ____levelParamsPanel, StandardLevelDetailView __instance) {
-			var beatmapKey = __instance.beatmapKey;
-			
 			if(extraUI == null) {
 				// I wanted to make a custom UI for this with bsml first... But this is MUCH easier and probably looks better
 				extraUI = GameObject.Instantiate(____levelParamsPanel, ____levelParamsPanel.transform.parent).gameObject;
-				extraUI.GetComponentInChildren<CanvasGroup>().alpha = 1;  // Don't know why the cloned one has 0 alpha
 
 				GameObject.Destroy(extraUI.GetComponent<LevelParamsPanel>());
 
@@ -70,11 +72,13 @@ namespace BetterSongList.HarmonyPatches.UI {
 				extraUI.transform.localPosition -= new Vector3(0, 1f);
 
 				fields = extraUI.GetComponentsInChildren<CurvedTextMeshPro>();
+				extraUI.GetComponent<CanvasGroup>().alpha = 1f;
 				SharedCoroutineStarter.instance.StartCoroutine(ProcessFields());
 			}
 
 			lastInstance = __instance;
 
+			var beatmapKey = __instance.beatmapKey;
 			if(fields != null) {
 				if(!SongDetailsUtil.isAvailable) {
 					fields[0].text = fields[1].text = "N/A";
@@ -130,8 +134,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 				}
 
 				// Basegame maps have no NJS or JD
-				var basicData = ____beatmapLevel.GetDifficultyBeatmapData(beatmapKey.beatmapCharacteristic, beatmapKey.difficulty);
-				var njs = basicData?.noteJumpMovementSpeed ?? 0;
+				var njs = ____beatmapLevel.beatmapBasicData[(beatmapKey.beatmapCharacteristic, beatmapKey.difficulty)].noteJumpMovementSpeed;
 				if(njs == 0)
 					njs = BeatmapDifficultyMethods.NoteJumpMovementSpeed(beatmapKey.difficulty);
 

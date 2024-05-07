@@ -60,8 +60,8 @@ namespace BetterSongList.SortModels {
 	public class ComparableFunctionSorterWithLegend : ComparableFunctionSorter, ISorterWithLegend {
 		Func<BeatmapLevel, string> legendBuilder = null;
 		public ComparableFunctionSorterWithLegend(
-			Func<BeatmapLevel, BeatmapLevel, int> sortValueGetter, 
-			Func<BeatmapLevel, string> legendBuilder) : base(sortValueGetter) 
+			Func<BeatmapLevel, BeatmapLevel, int> sortValueGetter,
+			Func<BeatmapLevel, string> legendBuilder) : base(sortValueGetter)
 		{
 			this.legendBuilder = legendBuilder;
 		}

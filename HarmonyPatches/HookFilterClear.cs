@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 
 namespace BetterSongList.HarmonyPatches {
-	[HarmonyPatch(typeof(LevelSearchViewController), nameof(LevelSearchViewController.ResetOptionFilterSettings))]
+	[HarmonyPatch(typeof(LevelSearchViewController), nameof(LevelSearchViewController.ResetAllFilterSettings))]
 	static class HookFilterClear {
 		[HarmonyPriority(int.MaxValue)]
 		static void Prefix() {

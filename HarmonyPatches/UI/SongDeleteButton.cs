@@ -9,7 +9,6 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using SongCore;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -40,15 +39,12 @@ namespace BetterSongList.HarmonyPatches.UI {
 				if(lastLevel == null)
 					return;
 
-				var path = Loader.CustomLevelLoader._loadedBeatmapSaveData.TryGetValue(lastLevel.levelID, out var loadedSaveData)
-					? loadedSaveData.customLevelFolderInfo.folderPath
-					: null;
-				
-				if(path == null)
+				var customLevelPath = SongCore.Collections.GetCustomLevelPath(lastLevel.levelID);
+				if(string.IsNullOrEmpty(customLevelPath))
 					return;
 				
 				try {
-					Loader.Instance.DeleteSong(path, !isWip);
+					SongCore.Loader.Instance.DeleteSong(customLevelPath, !isWip);
 				} catch {
 					FilterUI.persistentNuts.ShowErrorASAP("Deleting the map failed because it failed. Deal with it");
 				}
@@ -58,7 +54,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 
 				Task.Run(() => {
 					try {
-						WinApi.DeleteFileOrFolder(path);
+						WinApi.DeleteFileOrFolder(customLevelPath);
 					} catch { }
 				});
 			}
@@ -96,8 +92,7 @@ namespace BetterSongList.HarmonyPatches.UI {
 				);
 			}
 
-			if (BeatmapsUtil.GetHashOfLevel(____beatmapLevel) != null)	
-				lastLevel = ____beatmapLevel;
+			lastLevel = !____beatmapLevel.hasPrecalculatedData ? ____beatmapLevel : null;
 
 			UpdateState();
 		}
